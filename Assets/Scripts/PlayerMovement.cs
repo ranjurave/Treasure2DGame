@@ -6,17 +6,24 @@ public class PlayerMovement : MonoBehaviour {
     BoxCollider2D jumpCollider;
     CapsuleCollider2D playerCollider;
     public float climbSpeed = 2.0f;
+    public int coinsCollected;
+    public bool isAlive;
 
     void Start() {
+        isAlive = true;
         playerRB = GetComponent<Rigidbody2D>();
         playerAnimator = GetComponent<Animator>();
         jumpCollider = GetComponent<BoxCollider2D>();
         playerCollider = GetComponent<CapsuleCollider2D>();
     }
+
     void Update() {
-        Move();
-        Jump();
-        Climb();
+        if (isAlive) {
+            Move();
+            Jump();
+            Climb();
+            Die();
+        }
     }
 
     private void Move() {
@@ -63,6 +70,14 @@ public class PlayerMovement : MonoBehaviour {
         else {
             playerRB.gravityScale = 1; // restoring gravity
             playerAnimator.SetBool("CanClimb", false);
+        }
+    }
+    void Die() {
+        if (playerCollider.IsTouchingLayers(LayerMask.GetMask("Enemy"))){
+            isAlive = false;
+            playerAnimator.SetTrigger("Dead");
+            playerRB.velocity = new Vector2(10, 10);
+            playerCollider.enabled = false;
         }
     }
 }
