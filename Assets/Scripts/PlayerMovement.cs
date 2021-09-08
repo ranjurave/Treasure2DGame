@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 public class PlayerMovement : MonoBehaviour {
     Rigidbody2D playerRB;
@@ -8,6 +9,9 @@ public class PlayerMovement : MonoBehaviour {
     public float climbSpeed = 2.0f;
     public int coinsCollected;
     public bool isAlive;
+    public LineRenderer shootLine;
+    public Transform bulletSpawnPoint;
+    public GameObject bullet;
 
     void Start() {
         isAlive = true;
@@ -23,8 +27,11 @@ public class PlayerMovement : MonoBehaviour {
             Jump();
             Climb();
             Die();
+            //Fire();
+            FireRaycast();
         }
     }
+
 
     private void Move() {
         //Player movements
@@ -32,11 +39,19 @@ public class PlayerMovement : MonoBehaviour {
         Vector2 playerVelocity = new Vector2(movement * moveSpeed, playerRB.velocity.y);
         playerRB.velocity = playerVelocity;
 
-        // To flip the character when moving left
-        bool playerHasHoizontalMovment = Mathf.Abs(playerRB.velocity.x) > 0;
-        if (playerHasHoizontalMovment) {
-            transform.localScale = new Vector2(Mathf.Sign(playerRB.velocity.x), 1);
+        if (Input.GetAxis("Horizontal") < 0) {
+            transform.rotation = Quaternion.Euler(0, 180, 0);
         }
+        if (Input.GetAxis("Horizontal") > 0) {
+            transform.rotation = Quaternion.Euler(0, 0, 0);
+        }
+
+
+        //// To flip the character when moving left
+        bool playerHasHoizontalMovment = Mathf.Abs(playerRB.velocity.x) > 0;
+        //if (playerHasHoizontalMovment) {
+        //    transform.localScale = new Vector2(Mathf.Sign(playerRB.velocity.x), 1);
+        //}
 
         //Change Boolean parameter in Animator Controller to play walk animation
         playerAnimator.SetBool("CanWalk", playerHasHoizontalMovment);
@@ -79,5 +94,27 @@ public class PlayerMovement : MonoBehaviour {
             playerRB.velocity = new Vector2(10, 10);
             playerCollider.enabled = false;
         }
+    }
+    void Fire() {
+        if (Input.GetMouseButtonDown(0)) {
+            Instantiate(bullet, bulletSpawnPoint.position, bulletSpawnPoint.rotation);
+        }
+
+    }
+
+    void FireRaycast() {
+        if (Input.GetMouseButtonDown(0)) {
+            RaycastHit2D hitInfo = Physics2D.Raycast(bulletSpawnPoint.position, bulletSpawnPoint.right);
+            if (hitInfo) {
+                shootLine.SetPosition(0, bulletSpawnPoint.position);
+                shootLine.SetPosition(1, hitInfo.point);
+
+                EnemyScript enemy = hitInfo.transform.GetComponent<EnemyScript>();
+                if (enemy != null) {
+                    Destroy(enemy.gameObject);
+                }
+            }
+        }
+
     }
 }
