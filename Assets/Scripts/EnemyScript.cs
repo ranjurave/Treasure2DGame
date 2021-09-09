@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class EnemyScript : MonoBehaviour {
@@ -15,6 +13,7 @@ public class EnemyScript : MonoBehaviour {
         enemyRigidBody.velocity = new Vector2(moveSpeed * direction, 0);
     }
 
+    // Flipping the character when it hits a wall
     private void OnTriggerEnter2D(Collider2D collision) {
         direction *= -1;
         transform.localScale = new Vector2(Mathf.Sign(direction) * 4, 4);

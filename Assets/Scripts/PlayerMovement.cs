@@ -1,4 +1,4 @@
-using System;
+using System.Collections;
 using UnityEngine;
 public class PlayerMovement : MonoBehaviour {
     Rigidbody2D playerRB;
@@ -9,8 +9,8 @@ public class PlayerMovement : MonoBehaviour {
     public float climbSpeed = 2.0f;
     public int coinsCollected;
     public bool isAlive;
-    public LineRenderer shootLine;
-    public Transform bulletSpawnPoint;
+    public LineRenderer shootingLine; // Display line when raycasting to shoot
+    public Transform bulletSpawnPoint; // Set an offset position to start the bullet or raycast
     public GameObject bullet;
 
     void Start() {
@@ -20,7 +20,7 @@ public class PlayerMovement : MonoBehaviour {
         jumpCollider = GetComponent<BoxCollider2D>();
         playerCollider = GetComponent<CapsuleCollider2D>();
     }
-
+    
     void Update() {
         if (isAlive) {
             Move();
@@ -28,10 +28,9 @@ public class PlayerMovement : MonoBehaviour {
             Climb();
             Die();
             //Fire();
-            FireRaycast();
+            StartCoroutine(FireRaycast());
         }
     }
-
 
     private void Move() {
         //Player movements
@@ -45,10 +44,9 @@ public class PlayerMovement : MonoBehaviour {
         if (Input.GetAxis("Horizontal") > 0) {
             transform.rotation = Quaternion.Euler(0, 0, 0);
         }
-
+        bool playerHasHoizontalMovment = Mathf.Abs(playerRB.velocity.x) > 0;
 
         //// To flip the character when moving left
-        bool playerHasHoizontalMovment = Mathf.Abs(playerRB.velocity.x) > 0;
         //if (playerHasHoizontalMovment) {
         //    transform.localScale = new Vector2(Mathf.Sign(playerRB.velocity.x), 1);
         //}
@@ -65,7 +63,7 @@ public class PlayerMovement : MonoBehaviour {
             }
         }
         else {
-            playerAnimator.SetBool("CanJump", false);
+            playerAnimator.SetBool("CanJump", false); //Change Boolean parameter in Animator Controller to play jump animation
         }
     }
 
@@ -87,34 +85,42 @@ public class PlayerMovement : MonoBehaviour {
             playerAnimator.SetBool("CanClimb", false);
         }
     }
+
     void Die() {
         if (playerCollider.IsTouchingLayers(LayerMask.GetMask("Enemy"))){
             isAlive = false;
-            playerAnimator.SetTrigger("Dead");
-            playerRB.velocity = new Vector2(10, 10);
-            playerCollider.enabled = false;
+            playerAnimator.SetTrigger("Dead");//Change Trigger parameter in Animator Controller to play dead animation
+            playerRB.velocity = new Vector2(10, 10); // Toss the character up in air
+            playerCollider.enabled = false; // Disable all inputs
         }
     }
-    void Fire() {
+
+    // Fire with fireball sprite with Rigidbody
+    void Fire() { 
         if (Input.GetMouseButtonDown(0)) {
             Instantiate(bullet, bulletSpawnPoint.position, bulletSpawnPoint.rotation);
         }
-
     }
 
-    void FireRaycast() {
+    // Fire with raycast
+    IEnumerator FireRaycast() {
         if (Input.GetMouseButtonDown(0)) {
             RaycastHit2D hitInfo = Physics2D.Raycast(bulletSpawnPoint.position, bulletSpawnPoint.right);
             if (hitInfo) {
-                shootLine.SetPosition(0, bulletSpawnPoint.position);
-                shootLine.SetPosition(1, hitInfo.point);
-
+                shootingLine.SetPosition(0, bulletSpawnPoint.position);
+                shootingLine.SetPosition(1, hitInfo.point);
                 EnemyScript enemy = hitInfo.transform.GetComponent<EnemyScript>();
                 if (enemy != null) {
                     Destroy(enemy.gameObject);
                 }
             }
+            else {
+                shootingLine.SetPosition(0, bulletSpawnPoint.position);
+                shootingLine.SetPosition(1, bulletSpawnPoint.position + bulletSpawnPoint.right * 100);
+            }
+            shootingLine.enabled = true;
+            yield return new WaitForSeconds(0.05f);
+            shootingLine.enabled = false; 
         }
-
     }
 }
